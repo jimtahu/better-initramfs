@@ -75,6 +75,9 @@ process_commandline_options() {
 			enc_root\=*)
 				enc_root=$(get_opt $i)
 			;;
+            enc_keyfile\=*)
+                enc_keyfile=$(get_opt $i)
+            ;;
 			luks)
 				luks=true
 			;;
@@ -203,7 +206,7 @@ InitializeLUKS() {
 	fi
 
 	musthave enc_root
-	
+	sleep 3
 	local enc_num='1'
 	local dev_name="enc_root"
 	# We will use : to separate devices but we need normal IFS inside the for loop anyway.
@@ -223,6 +226,13 @@ InitializeLUKS() {
 		run chmod 755 /sbin/udevadm
 
 		local cryptsetup_args=""
+        if [ ! -z $enc_keyfile ]; then 
+            if [ ! -r $enc_keyfile ]; then
+                eerror "Could not read keyfile $enc_keyfile"
+            else
+                cryptsetup_args="${cryptsetup_args} -d $enc_keyfile"
+            fi
+        fi
 		if use luks_trim; then
 			cryptsetup_args="${cryptsetup_args} --allow-discards"
 		fi
